@@ -61,7 +61,7 @@ namespace HebrewBooksLib
 
         void OpenSelectedBook(HebrewBooksModel entry)
         {
-            var webView = new WebView2();
+            var webView = new WebView2 { Source = new Uri(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "LoadingAnimation.html"))};
             tabControl.Items.Add(new TabItem { Header = entry.Title, Content = webView, IsSelected = true, Tag = entry });
 
             LoadBook(webView, entry.ID_Book);
@@ -80,7 +80,6 @@ namespace HebrewBooksLib
         {
             try
             {
-                webview.Source = new Uri(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "LoadingAnimation.html"));
                 string url = $"https://download.hebrewbooks.org/downloadhandler.ashx?req={id}";
                 string fileName = $"{id}.pdf";
                 string downloadPath = Path.Combine(Path.GetTempPath(), fileName);
