@@ -1,9 +1,11 @@
 ﻿using Microsoft.VisualBasic;
 using Microsoft.Web.WebView2.Wpf;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -20,8 +22,17 @@ namespace HebrewBooksLib
         {
             string myDocumentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
             string defaultFolder = Path.Combine(myDocumentsPath, "HebrewBooksLib");
-            defaultFolder = Interaction.GetSetting(AppDomain.CurrentDomain.FriendlyName, Section, Key, defaultFolder);
             string filePath = Path.Combine(defaultFolder, $"{hebrewBooksModel.Title.safeTitle()}_{hebrewBooksModel.ID_Book.safeTitle()}.pdf");
+
+            if (!File.Exists(filePath))
+            {
+                var folders = LoadChosenFolders();
+                foreach (var folder in folders)
+                { 
+                    filePath = Path.Combine(folder, $"{hebrewBooksModel.Title.safeTitle()}_{hebrewBooksModel.ID_Book.safeTitle()}.pdf");
+                    if (File.Exists(filePath)) break;
+                }
+            }
 
             if (File.Exists(filePath))
                 webView?.CoreWebView2?.Navigate /*new Uri*/(filePath);
@@ -82,8 +93,7 @@ namespace HebrewBooksLib
                 ShowNewFolderButton = true
             };
 
-            string defaultFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "HebrewBooksLib");
-            defaultFolder = Interaction.GetSetting(AppDomain.CurrentDomain.FriendlyName, Section, Key, defaultFolder);
+            string defaultFolder = LoadChosenFolders().FirstOrDefault();
             if (!Directory.Exists(defaultFolder)) Directory.CreateDirectory(defaultFolder);
 
             folderDialog.SelectedPath = defaultFolder;
@@ -91,7 +101,7 @@ namespace HebrewBooksLib
             if (folderDialog.ShowDialog() == DialogResult.OK)
             {
                 string folderPath = folderDialog.SelectedPath;
-                Interaction.SaveSetting(AppDomain.CurrentDomain.FriendlyName, Section, Key, folderPath);
+                SaveChosenFolder(folderPath);
 
                 string fileName = $"{hebrewBooksModel.Title.safeTitle()}_{hebrewBooksModel.ID_Book.safeTitle()}.pdf";
                 string destinationPath = Path.Combine(folderPath, fileName);
@@ -147,5 +157,31 @@ namespace HebrewBooksLib
                 progressDialog.Show();
             }
         }
+
+        static void SaveChosenFolder(string folderPath)
+        {
+            var folders = LoadChosenFolders();
+            if (!folders.Contains(folderPath))
+            {
+                folders.Add(folderPath);
+                string json = JsonSerializer.Serialize(folders);
+                Interaction.SaveSetting(AppDomain.CurrentDomain.FriendlyName, Section, Key, json);
+            }
+        }
+
+        static List<string> LoadChosenFolders()
+        {
+            try
+            {
+                string json = Interaction.GetSetting(AppDomain.CurrentDomain.FriendlyName, Section, Key);
+                if (!string.IsNullOrEmpty(json))
+                    return JsonSerializer.Deserialize<List<string>>(json) ?? new List<string>();
+            }
+            catch { }
+
+            string defaultFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "HebrewBooksLib");
+            return new List<string> { defaultFolder };
+        }
+
     }
 }
