@@ -6,8 +6,9 @@
         xmlns:local="clr-namespace:HebrewBooksDesktop"
         xmlns:hb="clr-namespace:HebrewBooksLib;assembly=HebrewBooksLib"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        FlowDirection="{Binding FlowDirection, ElementName=hebrewBokksView}"
+        Title="היברו בוקס" Height="450" Width="800">
     <Grid>
-        <hb:HebrewBooksView/>
+        <hb:HebrewBooksView x:Name="hebrewBokksView"/>
     </Grid>
 </Window>

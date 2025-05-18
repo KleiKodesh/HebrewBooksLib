@@ -29,7 +29,7 @@
     <MapFileExtensions>true</MapFileExtensions>
     <SupportUrl>https://kleikodesh.github.io/</SupportUrl>
     <TargetCulture>he-IL</TargetCulture>
-    <ApplicationRevision>14</ApplicationRevision>
+    <ApplicationRevision>17</ApplicationRevision>
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <PublishWizardCompleted>true</PublishWizardCompleted>
