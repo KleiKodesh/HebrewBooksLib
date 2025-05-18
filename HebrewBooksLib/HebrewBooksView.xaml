@@ -7,7 +7,8 @@
              xmlns:local="clr-namespace:HebrewBooksLib"
              FlowDirection="RightToLeft"
              FontSize="14"
-             FontFamily="David">
+             FontFamily="David"
+             PreviewKeyDown="UserControl_PreviewKeyDown">
     <UserControl.DataContext>
         <local:HebrewBooksViewModel/>
     </UserControl.DataContext>
@@ -29,7 +30,7 @@
                 <Style TargetType="TabItem" BasedOn="{StaticResource X_ButtonTabStyle}"/>
             </TabControl.Resources>
 
-            <TabItem Header="בחר ספר">
+            <TabItem x:Name="FileBrowser" Header="בחר ספר" ToolTip="Ctrl + O">
                 <TabItem.HeaderTemplate>
                     <DataTemplate>
                         <StackPanel Orientation="Horizontal">
@@ -41,18 +42,19 @@
                     </DataTemplate>
                 </TabItem.HeaderTemplate>
 
-                <Grid ap:GridSetup.Rows="auto *">
+            <Grid ap:GridSetup.Rows="auto *">
 
                     <TextBox x:Name="SearchBox" Style="{StaticResource WaterMarkTextBox}"
              BorderBrush="{StaticResource BorderBrush}"
              BorderThickness="1"
              ToolTip="הזן שם ספר, שם מחבר או קטגוריה לחיפוש"
-             Margin="0,3,0,3" Padding="3"
+             Margin="3" Padding="3"
              Text="{Binding Searchterm, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"/>
 
                     <ListBox ItemsSource="{Binding BookEntries}" Grid.Row="1"
                   BorderBrush="{StaticResource BorderBrush}"
-                  SelectionChanged="ListBox_SelectionChanged">
+                  SelectionChanged="ListBox_SelectionChanged"
+                             Margin="3,0,3,3">
                         <ListBox.ItemsPanel>
                             <ItemsPanelTemplate>
                                 <VirtualizingStackPanel/>

@@ -29,7 +29,7 @@
     <MapFileExtensions>true</MapFileExtensions>
     <SupportUrl>https://kleikodesh.github.io/</SupportUrl>
     <TargetCulture>he-IL</TargetCulture>
-    <ApplicationRevision>12</ApplicationRevision>
+    <ApplicationRevision>14</ApplicationRevision>
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <PublishWizardCompleted>true</PublishWizardCompleted>
@@ -145,6 +145,10 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\WpfLib\WpfLib\WpfLib.csproj">
+      <Project>{494b02c1-54f2-4244-9a90-23c9984970e7}</Project>
+      <Name>WpfLib</Name>
+    </ProjectReference>
     <ProjectReference Include="..\HebrewBooksLib\HebrewBooksLib.csproj">
       <Project>{20c94936-5bdd-490d-bd60-6e43547cd9ff}</Project>
       <Name>HebrewBooksLib</Name>
@@ -157,6 +161,11 @@
     <BootstrapperPackage Include=".NETFramework,Version=v4.7.2">
       <Visible>False</Visible>
       <ProductName>Microsoft .NET Framework 4.7.2 %28x86 and x64%29</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.EdgeRuntime">
+      <Visible>False</Visible>
+      <ProductName>Edge WebView runtime</ProductName>
       <Install>true</Install>
     </BootstrapperPackage>
     <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">

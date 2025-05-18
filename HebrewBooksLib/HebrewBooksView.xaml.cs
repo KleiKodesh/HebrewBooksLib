@@ -8,6 +8,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.IO;
 using Microsoft.Web.WebView2.Wpf;
+using System.Windows.Input;
 
 namespace HebrewBooksLib
 {
@@ -19,7 +20,7 @@ namespace HebrewBooksLib
         public HebrewBooksView()
         {
             InitializeComponent();
-            //LoadRecentBooks();
+            LoadRecentBooks();
             //var vstoDoc = Globals.Factory.GetVstoObject(Globals.ThisAddIn.Application.ActiveDocument);
             //vstoDoc.CloseEvent += () =>  SaveRecentBooks();
         }
@@ -102,7 +103,16 @@ namespace HebrewBooksLib
                             client.DefaultRequestHeaders.Add("Referer", "https://www.hebrewbooks.org/");
 
                             byte[] fileBytes = await client.GetByteArrayAsync(url);
-                            File.WriteAllBytes(downloadPath, fileBytes);
+
+                            try
+                            {
+                                File.WriteAllBytes(downloadPath, fileBytes);
+                            }
+                            catch (Exception fileEx)
+                            {
+                                MessageBox.Show("Error saving file: " + fileEx.Message);
+                            }
+
                         }
                     }
 
@@ -127,5 +137,33 @@ namespace HebrewBooksLib
                 listBox.SelectedIndex = -1;
             }
         }
+
+        private void UserControl_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (Keyboard.Modifiers == ModifierKeys.Control)
+            {
+                switch (e.Key)
+                {
+                    case Key.O:
+                        tabControl.SelectedIndex = 0;
+                        e.Handled = true;
+                        break;
+
+                    case Key.W when tabControl.SelectedItem is TabItem tabItem:
+                        tabControl.Items.Remove(tabItem);
+                        e.Handled = true;
+                        break;
+
+                    case Key.X:
+                        var openFileTab = tabControl.Items[0];
+                        tabControl.Items.Clear();
+                        tabControl.Items.Add(openFileTab);
+                        tabControl.SelectedIndex = 0;
+                        e.Handled = true;
+                        break;
+                }
+            }
+        }
+
     }
 }
