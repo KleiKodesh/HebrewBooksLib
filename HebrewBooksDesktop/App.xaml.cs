@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Data;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Windows;
+﻿using System.Windows;
 
 namespace HebrewBooksDesktop
 {
@@ -15,7 +9,7 @@ namespace HebrewBooksDesktop
     {
         private void Application_LoadCompleted(object sender, System.Windows.Navigation.NavigationEventArgs e)
         {
-            WpfLib.Helpers.UpdateHelper.Update("KleiKodesh", "HebrewBooksLib", "v0");
+            WpfLib.Helpers.UpdateHelper.Update("KleiKodesh", "HebrewBooksLib", "v0.1");
         }
     }
 }

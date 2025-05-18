@@ -64,7 +64,7 @@ namespace HebrewBooksLib
             var webView = new WebView2();
             tabControl.Items.Add(new TabItem { Header = entry.Title, Content = webView, IsSelected = true, Tag = entry });
 
-            LoadBook(webView, entry.ID_Book);
+            LoadBook(webView, entry);
             UpdatePopularity(entry);
         }
 
@@ -76,7 +76,7 @@ namespace HebrewBooksLib
             await HebrewBooksManager.SaveBookEntriesListAsync();
         }
 
-        async void LoadBook(WebView2 webview, string id)
+        async void LoadBook(WebView2 webview, HebrewBooksModel entry)
         {
             try
             {
@@ -87,39 +87,10 @@ namespace HebrewBooksLib
                         MessageBox.Show("Failed to initialize WebView2.");
                         return;
                     }
-
                     var loadingAnimation = /*new Uri*/(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "LoadingAnimation.html"));
                     webview.CoreWebView2.Navigate(loadingAnimation);
-                    string url = $"https://download.hebrewbooks.org/downloadhandler.ashx?req={id}";
-                    string fileName = $"{id}.pdf";
-                    string downloadPath = Path.Combine(Path.GetTempPath(), fileName);
 
-                    if (!File.Exists(downloadPath))
-                    {
-                        var handler = new HttpClientHandler { UseCookies = true };
-                        using (HttpClient client = new HttpClient(handler))
-                        {
-                            client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 ...");
-                            client.DefaultRequestHeaders.Add("Referer", "https://www.hebrewbooks.org/");
-
-                            byte[] fileBytes = await client.GetByteArrayAsync(url);
-
-                            try
-                            {
-                                File.WriteAllBytes(downloadPath, fileBytes);
-                            }
-                            catch (Exception fileEx)
-                            {
-                                MessageBox.Show("Error saving file: " + fileEx.Message);
-                            }
-
-                        }
-                    }
-
-                    if (File.Exists(downloadPath))
-                        webview.CoreWebView2.Navigate /*new Uri*/(downloadPath);
-
-
+                    DownloadManager.LoadFile(webview, entry);
                 };
                 await webview.EnsureCoreWebView2Async();
             }
@@ -165,5 +136,10 @@ namespace HebrewBooksLib
             }
         }
 
+        private void DownloadButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && button.DataContext is HebrewBooksModel hebrewBooksModel)
+                DownloadManager.Download(hebrewBooksModel);
+        }
     }
 }

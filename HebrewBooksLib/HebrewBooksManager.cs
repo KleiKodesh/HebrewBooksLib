@@ -27,20 +27,17 @@ namespace HebrewBooksLib
             if (File.Exists(IndexPath))
             {
                 _bookEntries = new List<HebrewBooksModel>();
-                using (var reader = new StreamReader(IndexPath))
-                {
-                    while (!reader.EndOfStream)
-                    {
-                        var entry = reader.ReadLine();
-                        var splitEntry = entry.Split(',');
 
-                        if (splitEntry.Length == 12)  // Ensure correct number of entries
-                        {
-                            _bookEntries.Add(new HebrewBooksModel(
-                                splitEntry[0], splitEntry[1], splitEntry[2], splitEntry[3],
-                                splitEntry[4], splitEntry[5], splitEntry[6], splitEntry[7],
-                                splitEntry[8], splitEntry[9], splitEntry[10], int.Parse(splitEntry[11])));
-                        }
+                foreach (var entry in File.ReadLines(IndexPath))
+                {
+                    var splitEntry = entry.Split(',');
+
+                    if (splitEntry.Length == 12)  // Ensure correct number of entries
+                    {
+                        _bookEntries.Add(new HebrewBooksModel(
+                            splitEntry[0], splitEntry[1], splitEntry[2], splitEntry[3],
+                            splitEntry[4], splitEntry[5], splitEntry[6], splitEntry[7],
+                            splitEntry[8], splitEntry[9], splitEntry[10], int.Parse(splitEntry[11])));
                     }
                 }
             }
