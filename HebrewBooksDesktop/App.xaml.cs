@@ -9,7 +9,7 @@ namespace HebrewBooksDesktop
     {
         private void Application_LoadCompleted(object sender, System.Windows.Navigation.NavigationEventArgs e)
         {
-            WpfLib.Helpers.UpdateHelper.Update("KleiKodesh", "HebrewBooksLib", "v0.1");
+            WpfLib.Helpers.UpdateHelper.Update("KleiKodesh", "HebrewBooksLib", "v0.3");
         }
     }
 }

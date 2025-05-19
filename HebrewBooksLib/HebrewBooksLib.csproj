@@ -109,10 +109,6 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\WebViewLib\WebViewLib\WebViewLib.csproj">
-      <Project>{a50d2909-20e5-4142-9392-3546812c916a}</Project>
-      <Name>WebViewLib</Name>
-    </ProjectReference>
     <ProjectReference Include="..\..\WpfLib\WpfLib\WpfLib.csproj">
       <Project>{494b02c1-54f2-4244-9a90-23c9984970e7}</Project>
       <Name>WpfLib</Name>
