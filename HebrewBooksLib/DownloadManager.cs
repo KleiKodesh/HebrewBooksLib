@@ -1,5 +1,5 @@
 ﻿using Microsoft.VisualBasic;
-using Microsoft.Web.WebView2.Wpf;
+using WebViewLib;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -18,7 +18,7 @@ namespace HebrewBooksLib
 
         static string safeTitle(this string title) => string.Concat(title
                 .Where(c => !Path.GetInvalidFileNameChars().Contains(c)));
-        public static void LoadFile(WebView2 webView, HebrewBooksModel hebrewBooksModel)
+        public static void LoadFile(WebViewHost webView, HebrewBooksModel hebrewBooksModel)
         {
             string myDocumentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
             string defaultFolder = Path.Combine(myDocumentsPath, "HebrewBooksLib");
@@ -28,60 +28,61 @@ namespace HebrewBooksLib
             {
                 var folders = LoadChosenFolders();
                 foreach (var folder in folders)
-                { 
+                {
                     filePath = Path.Combine(folder, $"{hebrewBooksModel.Title.safeTitle()}_{hebrewBooksModel.ID_Book.safeTitle()}.pdf");
                     if (File.Exists(filePath)) break;
                 }
             }
 
             if (File.Exists(filePath))
-                webView?.CoreWebView2?.Navigate /*new Uri*/(filePath);
+                webView.Navigate(filePath);
             else DownloadToTemp(webView, hebrewBooksModel);
         }
 
-        public async static void DownloadToTemp(WebView2 webView, HebrewBooksModel entry)
+        public async static void DownloadToTemp(WebViewHost webView, HebrewBooksModel entry)
         {
-            string url = $"https://download.hebrewbooks.org/downloadhandler.ashx?req={entry.ID_Book}";
-            string fileName = $"{entry.ID_Book}.pdf";
-            string downloadPath = Path.Combine(Path.GetTempPath(), fileName);
 
-            if (!File.Exists(downloadPath))
+            try
             {
-                var handler = new HttpClientHandler { UseCookies = true };
-                using (HttpClient client = new HttpClient(handler))
+                string url = $"https://download.hebrewbooks.org/downloadhandler.ashx?req={entry.ID_Book}";
+                string fileName = $"{entry.ID_Book}.pdf";
+                string downloadPath = Path.Combine(Path.GetTempPath(), fileName);
+
+                if (!File.Exists(downloadPath))
                 {
-                    client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 ...");
-                    client.DefaultRequestHeaders.Add("Referer", "https://www.hebrewbooks.org/");
-
-                    byte[] fileBytes = await client.GetByteArrayAsync(url);
-
-                    try
+                    var handler = new HttpClientHandler { UseCookies = true };
+                    using (HttpClient client = new HttpClient(handler))
                     {
+                        client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 ...");
+                        client.DefaultRequestHeaders.Add("Referer", "https://www.hebrewbooks.org/");
+
+                        byte[] fileBytes = await client.GetByteArrayAsync(url);
+
                         File.WriteAllBytes(downloadPath, fileBytes);
                     }
-                    catch (Exception fileEx)
-                    {
-                        MessageBox.Show("Error saving file: " + fileEx.Message);
-                    }
                 }
-            }
 
-            webView.NavigationCompleted += (sender, e) =>
-            {
-                if (e.IsSuccess)
+                webView.WebView.NavigationCompleted += (sender, e) =>
                 {
-                    _ = Task.Run(async () =>
+                    if (e.IsSuccess)
                     {
-                        await Task.Delay(TimeSpan.FromSeconds(10));
-                        while (File.Exists(downloadPath))
-                            try  { File.Delete(downloadPath); }  catch  {}
-                    });
-                }
-            };
+                        _ = Task.Run(async () =>
+                        {
+                            await Task.Delay(TimeSpan.FromSeconds(10));
+                            while (File.Exists(downloadPath))
+                                try { File.Delete(downloadPath); } catch { }
+                        });
+                    }
+                };
 
 
-            if (File.Exists(downloadPath))
-                webView?.CoreWebView2?.Navigate /*new Uri*/(downloadPath);
+                if (File.Exists(downloadPath))
+                    webView.Navigate(downloadPath);
+            }
+            catch (Exception fileEx)
+            {
+                MessageBox.Show("Error saving file: " + fileEx.Message);
+            }
         }
 
         public static void Download(HebrewBooksModel hebrewBooksModel)

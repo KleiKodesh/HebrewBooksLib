@@ -7,8 +7,8 @@ using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
 using System.IO;
-using Microsoft.Web.WebView2.Wpf;
 using System.Windows.Input;
+using WebViewLib;
 
 namespace HebrewBooksLib
 {
@@ -20,7 +20,7 @@ namespace HebrewBooksLib
         public HebrewBooksView()
         {
             InitializeComponent();
-            LoadRecentBooks();
+            this.Loaded += (s,_) =>  LoadRecentBooks();
             //var vstoDoc = Globals.Factory.GetVstoObject(Globals.ThisAddIn.Application.ActiveDocument);
             //vstoDoc.CloseEvent += () =>  SaveRecentBooks();
         }
@@ -61,7 +61,7 @@ namespace HebrewBooksLib
 
         void OpenSelectedBook(HebrewBooksModel entry)
         {
-            var webView = new WebView2();
+            var webView = new WebViewHost();
             tabControl.Items.Add(new TabItem { Header = entry.Title, Content = webView, IsSelected = true, Tag = entry });
 
             LoadBook(webView, entry);
@@ -76,23 +76,13 @@ namespace HebrewBooksLib
             await HebrewBooksManager.SaveBookEntriesListAsync();
         }
 
-        async void LoadBook(WebView2 webview, HebrewBooksModel entry)
+        void LoadBook(WebViewHost webview, HebrewBooksModel entry)
         {
             try
             {
-                webview.CoreWebView2InitializationCompleted += async (s, args) =>
-                {
-                    if (!args.IsSuccess)
-                    {
-                        MessageBox.Show("Failed to initialize WebView2.");
-                        return;
-                    }
-                    var loadingAnimation = /*new Uri*/(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "LoadingAnimation.html"));
-                    webview.CoreWebView2.Navigate(loadingAnimation);
-
-                    DownloadManager.LoadFile(webview, entry);
-                };
-                await webview.EnsureCoreWebView2Async();
+                var loadingAnimation = /*new Uri*/(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "LoadingAnimation.html"));
+                webview.Navigate(loadingAnimation);
+                DownloadManager.LoadFile(webview, entry);
             }
             catch (Exception ex) { MessageBox.Show(ex.Message); }
         }
