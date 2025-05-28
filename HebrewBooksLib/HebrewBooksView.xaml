@@ -5,13 +5,18 @@
              xmlns:ap="clr-namespace:WpfLib.AttachedProperties;assembly=WpfLib"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:HebrewBooksLib"
+             xmlns:helpers="clr-namespace:WpfLib.Helpers;assembly=WpfLib"
              FlowDirection="RightToLeft"
              FontSize="14"
-             FontFamily="David"
-             PreviewKeyDown="UserControl_PreviewKeyDown">
+             FontFamily="Segoe UI Semilight"
+             PreviewKeyDown="UserControl_PreviewKeyDown"
+             Background="{Binding Path=(helpers:ThemeHelper.BackGround)}"
+             Foreground="{Binding Path=(helpers:ThemeHelper.ForeGround)}">
+    
     <UserControl.DataContext>
         <local:HebrewBooksViewModel/>
     </UserControl.DataContext>
+    
     <UserControl.Resources>
         <ResourceDictionary>
             <SolidColorBrush x:Key="BorderBrush" Color="LightGray"/>
@@ -25,9 +30,12 @@
                 BorderThickness="0" 
                 Margin="0"
                 Padding="0"
-                SelectionChanged="tabControl_SelectionChanged">
+                SelectionChanged="tabControl_SelectionChanged"
+                Background="Transparent">
             <TabControl.Resources>
-                <Style TargetType="TabItem" BasedOn="{StaticResource X_ButtonTabStyle}"/>
+            <Style TargetType="TabItem" BasedOn="{StaticResource X_ButtonTabStyle}">
+                <Setter Property="Background" Value="Transparent"/>
+            </Style>
             </TabControl.Resources>
 
             <TabItem x:Name="FileBrowser" Header="בחר ספר" ToolTip="Ctrl + O">
@@ -45,16 +53,17 @@
             <Grid ap:GridSetup.Rows="auto *">
 
                     <TextBox x:Name="SearchBox" Style="{StaticResource WaterMarkTextBox}"
-             BorderBrush="{StaticResource BorderBrush}"
-             BorderThickness="1"
-             ToolTip="הזן שם ספר, שם מחבר או קטגוריה לחיפוש"
-             Margin="3" Padding="3"
-             Text="{Binding Searchterm, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"/>
+                             BorderBrush="{StaticResource BorderBrush}"
+                             BorderThickness="1"
+                             ToolTip="הזן שם ספר, שם מחבר או קטגוריה לחיפוש"
+                             Margin="3" Padding="3"
+                             Text="{Binding Searchterm, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"/>
 
                 <ListBox ItemsSource="{Binding BookEntries}" Grid.Row="1"
-                  BorderBrush="{StaticResource BorderBrush}"
-                  SelectionChanged="ListBox_SelectionChanged"
-                             Margin="3,0,3,3"
+                          BorderBrush="{StaticResource BorderBrush}"
+                         Background="Transparent"
+                          SelectionChanged="ListBox_SelectionChanged"
+                          Margin="3,0,3,3"
                          VirtualizingPanel.IsVirtualizing="True"
                          VirtualizingPanel.VirtualizationMode="Recycling"
                          VirtualizingPanel.IsContainerVirtualizable="True"
@@ -62,15 +71,23 @@
                     <ListBox.ItemTemplate>
                             <DataTemplate>
                             <Grid ap:GridSetup.Columns="auto *">
+                                <Grid.Resources>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                        <Setter Property="Foreground" Value="{Binding Path=(helpers:ThemeHelper.ForeGround)}"/>
+                                    </Style>
+                                </Grid.Resources>
                                 <StackPanel  Grid.Column="1">
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock Text="{Binding Title}" FontWeight="Bold" FontSize="14" Margin="0,0,5,0" VerticalAlignment="Center"/>
-                                        <TextBlock Text="{Binding Author}" Foreground="Gray" FontSize="12" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{Binding Author}"  FontSize="12" VerticalAlignment="Center"
+                                                   Opacity="0.5"/>
                                         <!--<TextBlock Text="{Binding Pub_Date}" Foreground="Gray" FontSize="12" VerticalAlignment="Center"/>-->
                                     </StackPanel>
                                     <StackPanel Orientation="Horizontal" Margin="0,3,0,0">
-                                        <TextBlock Text="{Binding Tags}" Foreground="Gray" FontSize="12" Margin="0,0,5,0" VerticalAlignment="Center"/>
-                                        <TextBlock Text="{Binding Printing_Place}" Foreground="Gray" FontSize="12" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{Binding Tags}" FontSize="12" Margin="0,0,5,0" VerticalAlignment="Center"
+                                                   Opacity="0.5"/>
+                                        <TextBlock Text="{Binding Printing_Place}" FontSize="12" Margin="0,0,5,0" VerticalAlignment="Center"
+                                                   Opacity="0.5"/>
                                     </StackPanel>
                                 </StackPanel>
                                 
@@ -78,7 +95,7 @@
                                         Width="25" 
                                         ToolTip="שמור קובץ זה במחשב"
                                         Click="DownloadButton_Click">
-                                    <Path Fill="Black"
+                                    <Path Fill="{Binding Path=(helpers:ThemeHelper.ForeGround)}"
                                           Stretch="Fill" 
                                           Data="M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z"
                                           Height="10"
