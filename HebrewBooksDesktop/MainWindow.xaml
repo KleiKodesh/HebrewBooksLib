@@ -8,6 +8,17 @@
         mc:Ignorable="d"
         FlowDirection="{Binding FlowDirection, ElementName=hebrewBokksView}"
         Title="היברו בוקס" Height="450" Width="800">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/WpfLib;component/Dictionaries/ThemedWindowDictionary.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Window.Style>
+        <Style TargetType="Window" BasedOn="{StaticResource ThemedWindowStyle}"/>
+    </Window.Style>
     <Grid>
         <hb:HebrewBooksView x:Name="hebrewBokksView"/>
     </Grid>

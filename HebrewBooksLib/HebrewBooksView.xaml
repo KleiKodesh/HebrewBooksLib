@@ -10,8 +10,8 @@
              FontSize="14"
              FontFamily="Segoe UI Semilight"
              PreviewKeyDown="UserControl_PreviewKeyDown"
-             Background="{Binding Path=(helpers:ThemeHelper.BackGround)}"
-             Foreground="{Binding Path=(helpers:ThemeHelper.ForeGround)}">
+             Background="{Binding Path=(helpers:ThemeHelper.Background)}"
+             Foreground="{Binding Path=(helpers:ThemeHelper.Foreground)}">
     
     <UserControl.DataContext>
         <local:HebrewBooksViewModel/>
@@ -45,7 +45,7 @@
                             <Image Source="/HebrewBooksLib;component/Resources/HebrewBooks.png" 
                                    Height="10"
                                    Margin="2,2,5,0"/>
-                            <TextBlock Text="{Binding}"/>
+                            <TextBlock Text="{Binding}" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
                         </StackPanel>
                     </DataTemplate>
                 </TabItem.HeaderTemplate>
@@ -73,7 +73,7 @@
                             <Grid ap:GridSetup.Columns="auto *">
                                 <Grid.Resources>
                                     <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
-                                        <Setter Property="Foreground" Value="{Binding Path=(helpers:ThemeHelper.ForeGround)}"/>
+                                        <Setter Property="Foreground" Value="{Binding Path=(helpers:ThemeHelper.Foreground)}"/>
                                     </Style>
                                 </Grid.Resources>
                                 <StackPanel  Grid.Column="1">
@@ -95,7 +95,7 @@
                                         Width="25" 
                                         ToolTip="שמור קובץ זה במחשב"
                                         Click="DownloadButton_Click">
-                                    <Path Fill="{Binding Path=(helpers:ThemeHelper.ForeGround)}"
+                                    <Path Fill="{Binding Path=(helpers:ThemeHelper.Foreground)}"
                                           Stretch="Fill" 
                                           Data="M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z"
                                           Height="10"
