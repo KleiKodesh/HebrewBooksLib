@@ -8,6 +8,7 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using CloudflareSolverRe;
 
 namespace HebrewBooksLib
 {
@@ -49,8 +50,14 @@ namespace HebrewBooksLib
                 string downloadPath = Path.Combine(Path.GetTempPath(), fileName);
 
                 if (!File.Exists(downloadPath))
+                   
                 {
-                    var handler = new HttpClientHandler { UseCookies = true };
+                    var handler = new ClearanceHandler
+                    {
+                        MaxTries = 3,
+                        ClearanceDelay = 3000
+                    };
+                    //var handler = new HttpClientHandler { UseCookies = true };
                     using (HttpClient client = new HttpClient(handler))
                     {
                         client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 ...");
