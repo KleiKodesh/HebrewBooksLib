@@ -1,4 +1,5 @@
-﻿using Microsoft.VisualBasic;
+﻿using CloudflareSolverRe;
+using Microsoft.VisualBasic;
 using WebViewLib;
 using System;
 using System.Collections.Generic;
@@ -8,7 +9,9 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using CloudflareSolverRe;
+using System.Windows.Threading;
+using Microsoft.Web.WebView2.WinForms;
+using Microsoft.Web.WebView2.Core;
 
 namespace HebrewBooksLib
 {
@@ -19,7 +22,7 @@ namespace HebrewBooksLib
 
         static string safeTitle(this string title) => string.Concat(title
                 .Where(c => !Path.GetInvalidFileNameChars().Contains(c)));
-        public static void LoadFile(WebViewHost webView, HebrewBooksModel hebrewBooksModel)
+        public static async Task LoadFile(WebViewHost webViewHost, HebrewBooksModel hebrewBooksModel)
         {
             string myDocumentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
             string defaultFolder = Path.Combine(myDocumentsPath, "HebrewBooksLib");
@@ -36,40 +39,60 @@ namespace HebrewBooksLib
             }
 
             if (File.Exists(filePath))
-                webView.Navigate(filePath);
-            else DownloadToTemp(webView, hebrewBooksModel);
+                webViewHost.Navigate(filePath);
+            else DownloadToTemp(webViewHost, hebrewBooksModel);
         }
 
-        public async static void DownloadToTemp(WebViewHost webView, HebrewBooksModel entry)
+        public static void DownloadToTemp(WebViewHost webViewHost, HebrewBooksModel entry)
         {
-
             try
             {
                 string url = $"https://download.hebrewbooks.org/downloadhandler.ashx?req={entry.ID_Book}";
                 string fileName = $"{entry.ID_Book}.pdf";
                 string downloadPath = Path.Combine(Path.GetTempPath(), fileName);
 
-                if (!File.Exists(downloadPath))
-                   
+                if (!File.Exists(downloadPath))                 
                 {
-                    var handler = new ClearanceHandler
+                    webViewHost.WebView.CoreWebView2.DownloadStarting += (s, e) =>
                     {
-                        MaxTries = 3,
-                        ClearanceDelay = 3000
+                        try
+                        {
+                            // Set destination file path
+                            e.ResultFilePath = downloadPath;
+
+                            // Optional: prevent the default dialog
+                            e.Handled = true;
+
+                            var download = e.DownloadOperation;
+                            // Hook completed
+                            download.StateChanged += (___, ____) =>
+                            {
+                                if (download.State == CoreWebView2DownloadState.Completed)
+                                {
+                                    webViewHost.Dispatcher.Invoke(() =>
+                                    {
+                                        // Once downloaded, display the PDF directly
+                                        var uri = new Uri(downloadPath).AbsoluteUri;
+                                        webViewHost.Navigate(uri);
+                                    });
+                                }
+                                else if (download.State == CoreWebView2DownloadState.Interrupted)
+                                {
+                                    webViewHost.Dispatcher.Invoke(() => MessageBox.Show($"Download interrupted: {download.InterruptReason}"));
+                                }
+                            };
+                        }
+                        catch (Exception ex)
+                        {
+                            MessageBox.Show($"Download setup error: {ex.Message}");
+                        }
                     };
-                    //var handler = new HttpClientHandler { UseCookies = true };
-                    using (HttpClient client = new HttpClient(handler))
-                    {
-                        client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 ...");
-                        client.DefaultRequestHeaders.Add("Referer", "https://www.hebrewbooks.org/");
 
-                        byte[] fileBytes = await client.GetByteArrayAsync(url);
-
-                        File.WriteAllBytes(downloadPath, fileBytes);
-                    }
+                    // Navigate to file link – Edge handles the download automatically
+                    webViewHost.Navigate(url);
                 }
 
-                webView.WebView.NavigationCompleted += (sender, e) =>
+                webViewHost.WebView.NavigationCompleted += (sender, e) =>
                 {
                     if (e.IsSuccess)
                     {
@@ -84,7 +107,7 @@ namespace HebrewBooksLib
 
 
                 if (File.Exists(downloadPath))
-                    webView.Navigate(downloadPath);
+                    webViewHost.Navigate(downloadPath);
             }
             catch (Exception fileEx)
             {
