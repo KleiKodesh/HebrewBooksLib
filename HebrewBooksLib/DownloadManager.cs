@@ -1,6 +1,7 @@
-﻿using CloudflareSolverRe;
-using Microsoft.VisualBasic;
-using WebViewLib;
+﻿using Microsoft.VisualBasic;
+using Microsoft.Web.WebView2.Core;
+using Microsoft.Web.WebView2.WinForms;
+using Ookii.Dialogs.WinForms;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -10,8 +11,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Windows.Threading;
-using Microsoft.Web.WebView2.WinForms;
-using Microsoft.Web.WebView2.Core;
+using WebViewLib;
 
 namespace HebrewBooksLib
 {
@@ -22,7 +22,7 @@ namespace HebrewBooksLib
 
         static string safeTitle(this string title) => string.Concat(title
                 .Where(c => !Path.GetInvalidFileNameChars().Contains(c)));
-        public static async Task LoadFile(WebViewHost webViewHost, HebrewBooksModel hebrewBooksModel)
+        public async static Task LoadFile(Dispatcher dispatcher, WebView2 webView, HebrewBooksModel hebrewBooksModel)
         {
             string myDocumentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
             string defaultFolder = Path.Combine(myDocumentsPath, "HebrewBooksLib");
@@ -39,11 +39,11 @@ namespace HebrewBooksLib
             }
 
             if (File.Exists(filePath))
-                webViewHost.Navigate(filePath);
-            else DownloadToTemp(webViewHost, hebrewBooksModel);
+                webView.CoreWebView2.Navigate(filePath);
+            else DownloadToTemp(dispatcher, webView, hebrewBooksModel);
         }
 
-        public static void DownloadToTemp(WebViewHost webViewHost, HebrewBooksModel entry)
+        public static void DownloadToTemp(Dispatcher dispatcher, WebView2 webView, HebrewBooksModel entry)
         {
             try
             {
@@ -51,9 +51,9 @@ namespace HebrewBooksLib
                 string fileName = $"{entry.ID_Book}.pdf";
                 string downloadPath = Path.Combine(Path.GetTempPath(), fileName);
 
-                if (!File.Exists(downloadPath))                 
+                if (!File.Exists(downloadPath))
                 {
-                    webViewHost.WebView.CoreWebView2.DownloadStarting += (s, e) =>
+                    webView.CoreWebView2.DownloadStarting += (s, e) =>
                     {
                         try
                         {
@@ -69,16 +69,16 @@ namespace HebrewBooksLib
                             {
                                 if (download.State == CoreWebView2DownloadState.Completed)
                                 {
-                                    webViewHost.Dispatcher.Invoke(() =>
+                                    dispatcher.Invoke(() =>
                                     {
                                         // Once downloaded, display the PDF directly
                                         var uri = new Uri(downloadPath).AbsoluteUri;
-                                        webViewHost.Navigate(uri);
+                                        webView.CoreWebView2.Navigate(uri);
                                     });
                                 }
                                 else if (download.State == CoreWebView2DownloadState.Interrupted)
                                 {
-                                    webViewHost.Dispatcher.Invoke(() => MessageBox.Show($"Download interrupted: {download.InterruptReason}"));
+                                    dispatcher.Invoke(() => MessageBox.Show($"Download interrupted: {download.InterruptReason}"));
                                 }
                             };
                         }
@@ -89,10 +89,10 @@ namespace HebrewBooksLib
                     };
 
                     // Navigate to file link – Edge handles the download automatically
-                    webViewHost.Navigate(url);
+                    webView.CoreWebView2.Navigate(url);
                 }
 
-                webViewHost.WebView.NavigationCompleted += (sender, e) =>
+                webView.NavigationCompleted += (sender, e) =>
                 {
                     if (e.IsSuccess)
                     {
@@ -107,7 +107,7 @@ namespace HebrewBooksLib
 
 
                 if (File.Exists(downloadPath))
-                    webViewHost.Navigate(downloadPath);
+                    webView.CoreWebView2.Navigate(downloadPath);
             }
             catch (Exception fileEx)
             {
@@ -115,77 +115,89 @@ namespace HebrewBooksLib
             }
         }
 
-        public static void Download(HebrewBooksModel hebrewBooksModel)
+        public static async Task CostumeDownloadAsync(HebrewBooksModel hebrewBooksModel)
         {
-            var folderDialog = new Ookii.Dialogs.WinForms.VistaFolderBrowserDialog
+            // Simple progress dialog while download is happening
+            var progressDialog = new ProgressDialog
             {
-                Description = "בחר תיקיה לשמירת הקובץ",
-                UseDescriptionForTitle = true,
-                ShowNewFolderButton = true
+                WindowTitle = "מוריד קובץ",
+                Text = "מוריד את הקובץ...",
+                Description = "אנא המתן",
+                ShowCancelButton = false,
+                ShowTimeRemaining = true
+            };
+            // Show dialog until download finishes
+            bool downloadFinished = false;
+            progressDialog.DoWork += (s, e) =>
+            {
+                while (!downloadFinished)
+                    System.Threading.Thread.Sleep(100);
             };
 
-            string defaultFolder = LoadChosenFolders().FirstOrDefault();
-            if (!Directory.Exists(defaultFolder)) Directory.CreateDirectory(defaultFolder);
-
-            folderDialog.SelectedPath = defaultFolder;
-
-            if (folderDialog.ShowDialog() == DialogResult.OK)
+            try
             {
+                // Choose folder
+                var folderDialog = new VistaFolderBrowserDialog
+                {
+                    Description = "בחר תיקיה לשמירת הקובץ",
+                    UseDescriptionForTitle = true,
+                    ShowNewFolderButton = true
+                };
+
+                string defaultFolder = LoadChosenFolders().FirstOrDefault() ?? Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+                if (!Directory.Exists(defaultFolder)) Directory.CreateDirectory(defaultFolder);
+                folderDialog.SelectedPath = defaultFolder;
+
+                if (folderDialog.ShowDialog() != DialogResult.OK) return;
+
                 string folderPath = folderDialog.SelectedPath;
                 SaveChosenFolder(folderPath);
 
                 string fileName = $"{hebrewBooksModel.Title.safeTitle()}_{hebrewBooksModel.ID_Book.safeTitle()}.pdf";
                 string destinationPath = Path.Combine(folderPath, fileName);
-                string downloadUrl = $"https://download.hebrewbooks.org/downloadhandler.ashx?req={hebrewBooksModel.ID_Book}";
-
-                var progressDialog = new Ookii.Dialogs.WinForms.ProgressDialog
-                {
-                    WindowTitle = "מוריד קובץ",
-                    Text = "מוריד את הקובץ...",
-                    Description = "אנא המתן",
-                    ShowCancelButton = false,
-                    ShowTimeRemaining = true
-                };
-
-                progressDialog.DoWork += (sender2, e2) =>
-                {
-                    var dialog = (Ookii.Dialogs.WinForms.ProgressDialog)sender2;
-
-                    var handler = new HttpClientHandler { UseCookies = true };
-                    using (HttpClient client = new HttpClient(handler))
-                    {
-                        client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 ...");
-                        client.DefaultRequestHeaders.Add("Referer", "https://www.hebrewbooks.org/");
-
-                        using (var response = client.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead).Result)
-                        {
-                            response.EnsureSuccessStatusCode();
-
-                            long? totalBytes = response.Content.Headers.ContentLength;
-                            using (var stream = response.Content.ReadAsStreamAsync().Result)
-                            using (var fileStream = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.None))
-                            {
-                                byte[] buffer = new byte[8192];
-                                long totalRead = 0;
-                                int bytesRead;
-
-                                while ((bytesRead = stream.Read(buffer, 0, buffer.Length)) > 0)
-                                {
-                                    fileStream.Write(buffer, 0, bytesRead);
-                                    totalRead += bytesRead;
-
-                                    if (totalBytes.HasValue)
-                                    {
-                                        int progress = (int)((totalRead * 100) / totalBytes.Value);
-                                        dialog.ReportProgress(progress);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                };
 
                 progressDialog.Show();
+
+                // Setup WebView2
+                var webView = new WebView2();
+                webView.Visible = false;
+                var env = await CoreWebView2Environment.CreateAsync();
+                await webView.EnsureCoreWebView2Async(env);
+
+                // Optional: intercept downloads
+                webView.CoreWebView2.DownloadStarting += (sender, args) =>
+                {
+                    // Set the download path
+                    args.ResultFilePath = destinationPath;
+
+                    // Optionally prevent download UI
+                    args.Handled = false;
+                };
+
+                string downloadUrl = $"https://download.hebrewbooks.org/downloadhandler.ashx?req={hebrewBooksModel.ID_Book}";
+
+                // Navigate to the download URL (this will trigger the download)
+                webView.CoreWebView2.Navigate(downloadUrl);
+
+                webView.CoreWebView2.DownloadStarting += (s, e) =>
+                {
+                    e.DownloadOperation.BytesReceivedChanged += (sender2, e2) =>
+                    {
+                        long received = e.DownloadOperation.BytesReceived;
+                        long total = (long)e.DownloadOperation.TotalBytesToReceive;
+                        if (total > 0)
+                            progressDialog.ReportProgress((int)(received * 100 / total));
+                    };
+                    e.DownloadOperation.StateChanged += (sender3, e3) =>
+                    {
+                        if (e.DownloadOperation.State == CoreWebView2DownloadState.Completed)
+                            downloadFinished = true;
+                    };
+                };
+            }
+            catch
+            {
+                downloadFinished = true;
             }
         }
 

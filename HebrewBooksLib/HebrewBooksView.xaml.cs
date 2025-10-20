@@ -9,6 +9,7 @@ using System.Windows.Controls;
 using System.IO;
 using System.Windows.Input;
 using WebViewLib;
+using Microsoft.Web.WebView2.WinForms;
 
 namespace HebrewBooksLib
 {
@@ -76,15 +77,20 @@ namespace HebrewBooksLib
             await HebrewBooksManager.SaveBookEntriesListAsync();
         }
 
-        void LoadBook(WebViewHost webview, HebrewBooksModel entry)
+        async void LoadBook(WebViewHost webViewHost, HebrewBooksModel entry)
         {
-            try
+            webViewHost.WebView.CoreWebView2InitializationCompleted += async (s, e) =>
             {
-                var loadingAnimation = /*new Uri*/(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "LoadingAnimation.html"));
-                webview.Navigate(loadingAnimation);
-                DownloadManager.LoadFile(webview, entry);
-            }
-            catch (Exception ex) { MessageBox.Show(ex.Message); }
+                try
+                {
+                    var loadingAnimation = /*new Uri*/(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "LoadingAnimation.html"));
+                    webViewHost.Navigate(loadingAnimation);
+                    await DownloadManager.LoadFile(this.Dispatcher, webViewHost.WebView, entry);
+                }
+                catch (Exception ex) { MessageBox.Show(ex.Message); }
+            };
+
+            await webViewHost.EnsurCoreAsync();
         }
 
         private void tabControl_SelectionChanged(object sender, SelectionChangedEventArgs e) =>
@@ -126,10 +132,10 @@ namespace HebrewBooksLib
             }
         }
 
-        private void DownloadButton_Click(object sender, RoutedEventArgs e)
+        private async void DownloadButton_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button button && button.DataContext is HebrewBooksModel hebrewBooksModel)
-                DownloadManager.Download(hebrewBooksModel);
+                await DownloadManager.CostumeDownloadAsync(hebrewBooksModel);
         }
     }
 }
